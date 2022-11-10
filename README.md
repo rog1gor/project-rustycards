@@ -1,4 +1,4 @@
-# Frobnicator (this is a template)
+# RustyCards
 
 ## Authors
 - Igor Kamiński (@rog1gor on GitHub)
