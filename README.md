@@ -28,5 +28,5 @@ Later we will try to develop the project - we will add more cards, card collecti
 
 ## Libraries
 - Serde (for serialization)
-- Need to choose one for the graphics
-- Need to choose one for game engine
+- bevy ECS (for game engine)
+- nannou (graphics)
