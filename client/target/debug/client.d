@@ -1,1 +1,0 @@
-/mnt/c/Users/igork/OneDrive/Pulpit/Studia/JNP3/Project/project-rustycards/client/target/debug/client: /mnt/c/Users/igork/OneDrive/Pulpit/Studia/JNP3/Project/project-rustycards/client/src/action.rs /mnt/c/Users/igork/OneDrive/Pulpit/Studia/JNP3/Project/project-rustycards/client/src/main.rs
