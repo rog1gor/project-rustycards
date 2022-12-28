@@ -30,3 +30,10 @@ Later we will try to develop the project - we will add more cards, card collecti
 - Serde (for serialization)
 - bevy ECS (for game engine)
 - nannou (graphics)
+
+## First part of the project
+- The client and the server (lobby like) is ready
+- There are some delays with game logic
+- To run the server you need to run cargo run in server directory
+- To run the client you need to run cargo run in client directory
+- To setup clients and server there are multiple command line messages that should help with the setup.
