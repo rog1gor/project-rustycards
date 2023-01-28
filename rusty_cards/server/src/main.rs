@@ -1,3 +1,4 @@
+extern crate game;
 extern crate rusty_cards;
 mod server;
 

@@ -1,26 +1,15 @@
-use serde::{Deserialize, Serialize};
 use std::{
-    io::{self, Read, Write},
+    io::{self, Read},
     net::{SocketAddr, TcpListener, TcpStream},
     option::Option,
     str::FromStr,
     sync::atomic::{AtomicBool, Ordering},
 };
 
+use crate::action::{self, Action};
+use crate::game;
+use crate::utils;
 use rusty_cards::Handshake;
-use crate::action::Action;
-
-// Serializes a message of type T and puts it to a given stream
-pub fn send_msg<T>(stream: &mut TcpStream, msg: T) -> io::Result<()>
-where
-    T: Serialize + for<'de> Deserialize<'de>,
-{
-    let serialized_msg = serde_json::to_vec(&msg)?;
-    println!("Sending a message: {:?}", serialized_msg);
-    stream.write_all(&serialized_msg)?;
-
-    Ok(())
-}
 
 pub struct Client {
     server: SocketAddr,
@@ -62,7 +51,8 @@ impl Client {
 
     pub fn start(&self) -> io::Result<()> {
         println!("Looking for an opponent");
-        let opponent_stream: Option<TcpStream> = self.find_opponent();
+        let mut game_state = game::GameState::new();
+        let opponent_stream: Option<TcpStream> = self.find_opponent(&mut game_state);
         if opponent_stream.is_none() {
             panic!("Opponent stream is set to None. Unexpected behaviour!");
         }
@@ -72,7 +62,7 @@ impl Client {
         if self.going_first.load(Ordering::Relaxed) {
             println!("Starting the game...");
             let start_game: Action = Action::Start("Worthy opponent :3".to_string());
-            match send_msg(&mut opponent_stream, start_game) {
+            match utils::send_msg(&mut opponent_stream, start_game) {
                 Ok(()) => println!("Game beggins!"),
                 Err(e) => println!("Connection failed T^T\nError: {e}"),
             }
@@ -91,6 +81,7 @@ impl Client {
                 _ => println!("Connection failed T^T"),
             }
         }
+        self.proceed_game(opponent_stream, game_state);
         println!("The game ends :] GG");
         Ok(())
     }
@@ -105,17 +96,17 @@ impl Client {
     //          It indicates that we should send a message with a password
     //          and the opponent will wait for this message on the socket
     //          address that we have received
-    pub fn find_opponent(&self) -> Option<TcpStream> {
+    pub fn find_opponent(&self, game_state: &mut game::GameState) -> Option<TcpStream> {
         let mut server_stream = TcpStream::connect(self.server).unwrap();
-        let connection_established: bool = false;  // this should never change
+        let connection_established: bool = false; // this should never change
         while !connection_established {
             println!("Sending listener address to the server.");
             let listener_address = self.listener.local_addr().ok()?;
             let ready_msg = Handshake::Ready(listener_address);
-            send_msg(&mut server_stream, ready_msg).ok()?;
+            utils::send_msg(&mut server_stream, ready_msg).ok()?;
 
             println!("Waiting for an opponent...");
-            let mut buffer = [0; 1024];
+            let mut buffer = [0; 4096];
             let mut num_bytes = 0;
             while num_bytes == 0 {
                 num_bytes = server_stream.read(&mut buffer).unwrap();
@@ -124,12 +115,18 @@ impl Client {
             println!("Opponent appeared. Trying to establish connection...");
             let server_response: Handshake = serde_json::from_slice(&buffer[..num_bytes]).unwrap();
             match server_response {
-                Handshake::Send(addr, password) => match self.received_send(addr, password) {
-                    Some(s) => return Some(s),
+                Handshake::Send(addr, password, gs) => match self.received_send(addr, password) {
+                    Some(s) => {
+                        *game_state = gs;
+                        return Some(s);
+                    }
                     None => continue,
                 },
-                Handshake::Wait(password) => match self.received_wait(password) {
-                    Some(s) => return Some(s),
+                Handshake::Wait(password, gs) => match self.received_wait(password) {
+                    Some(s) => {
+                        *game_state = gs;
+                        return Some(s);
+                    }
                     None => continue,
                 },
                 _ => {
@@ -143,12 +140,12 @@ impl Client {
 
     // Function that provides steps for the player who received Send message from the server
     pub fn received_send(&self, addr: SocketAddr, password: String) -> Option<TcpStream> {
-        self.going_first.store(true, Ordering::Relaxed);  // This player goes first
+        self.going_first.store(true, Ordering::Relaxed); // This player goes first
 
         println!("Sending {password} to the {addr}, to establish connection.");
         let mut opponent_stream: TcpStream = TcpStream::connect(addr).unwrap();
         let msg = Handshake::P2P(password.clone());
-        match send_msg(&mut opponent_stream, msg) {
+        match utils::send_msg(&mut opponent_stream, msg) {
             Ok(()) => println!("Message sent successfully!"),
             Err(e) => {
                 println!("Couldn't send the message due to error {e}.");
@@ -175,7 +172,7 @@ impl Client {
 
     // Function that provides steps for the player who received Wait message from the server
     pub fn received_wait(&self, password: String) -> Option<TcpStream> {
-        self.going_first.store(false, Ordering::Relaxed);  // this player goes second
+        self.going_first.store(false, Ordering::Relaxed); // this player goes second
 
         println!("Waiting for the {password} to establish connection...");
         for stream in self.listener.incoming() {
@@ -184,7 +181,7 @@ impl Client {
             let mut buffer = [0; 1024];
             let mut num_bytes = 0;
             while num_bytes == 0 {
-                num_bytes =  stream.read(&mut buffer).unwrap();
+                num_bytes = stream.read(&mut buffer).unwrap();
             }
 
             let msg: Handshake = serde_json::from_slice(&buffer[..num_bytes]).unwrap();
@@ -195,7 +192,7 @@ impl Client {
             println!("Received message from the opponent! Sending confirmation.");
 
             let confirmation: Handshake = Handshake::P2P(password);
-            match send_msg(&mut stream, confirmation) {
+            match utils::send_msg(&mut stream, confirmation) {
                 Ok(()) => println!("Confirmation sent!"),
                 Err(e) => {
                     println!(
@@ -208,6 +205,13 @@ impl Client {
             println!("Connection established!");
             return Some(stream);
         }
-        return None;  // Should never be reached
+        return None; // Should never be reached
+    }
+
+    pub fn proceed_game(&self, mut opponent_stream: TcpStream, mut game_state: game::GameState) {
+        game_state.begin();
+        loop {
+            action::perform_action(&mut game_state);
+        }
     }
 }
