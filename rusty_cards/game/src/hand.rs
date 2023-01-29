@@ -9,6 +9,12 @@ pub struct Hand {
     cards: Vec<Minion>,
 }
 
+impl Default for Hand {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Hand {
     pub fn new() -> Hand {
         Hand {

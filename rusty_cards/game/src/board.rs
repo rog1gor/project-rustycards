@@ -10,6 +10,12 @@ pub struct Field {
     minion: Option<Minion>,
 }
 
+impl Default for Field {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Field {
     pub fn new() -> Field {
         Field {
@@ -23,16 +29,16 @@ impl Field {
     }
 
     pub fn is_empty(&self) -> bool {
-        match self.minion {
-            Some(_) => false,
-            None => true,
+        if self.minion.is_none() {
+            return true;
         }
+        false
     }
 
     pub fn get_minion(&self) -> &Minion {
-        assert!(self.is_empty() == false);
+        assert!(!self.is_empty());
         match &self.minion {
-            Some(m) => &m,
+            Some(m) => m,
             None => panic!("This methdo should not be called when the field is empty!"),
         }
     }
@@ -47,7 +53,7 @@ impl Field {
     }
 
     pub fn apply_dmg(&mut self, dmg: i32) {
-        assert!(self.is_empty() == false);
+        assert!(!self.is_empty());
         match &mut self.minion {
             Some(m) => {
                 if m.apply_dmg(dmg) {
@@ -66,6 +72,12 @@ impl Field {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Board {
     fields: Vec<Field>,
+}
+
+impl Default for Board {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Board {
@@ -135,9 +147,7 @@ impl Board {
         let field_num = Self::translate_idx(field_num, side);
         let opposing = Self::opposing_idx(field_num);
 
-        if self.fields[field_num].is_empty() {
-            return Attack::None;
-        } else if !self.fields[field_num].can_attack() {
+        if self.fields[field_num].is_empty() || !self.fields[field_num].can_attack() {
             return Attack::None;
         } else if self.fields[opposing].is_empty() {
             return Attack::Face;
@@ -156,7 +166,9 @@ impl Board {
         if self.fields[Self::translate_idx(idx, side)].is_empty() {
             return 0;
         }
-        self.fields[Self::translate_idx(idx, side)].get_minion().get_attack()
+        self.fields[Self::translate_idx(idx, side)]
+            .get_minion()
+            .get_attack()
     }
 
     fn get_minions(&self, side: &Side) -> Vec<Option<&Minion>> {

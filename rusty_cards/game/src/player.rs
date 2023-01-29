@@ -17,7 +17,7 @@ pub struct Player {
     hand: Hand,
     health: i32,
     mana: i32,
-    side: Side
+    side: Side,
 }
 
 impl Player {
@@ -120,8 +120,14 @@ impl Player {
         println!("|               |    |               |");
         println!(
             "{}    {}",
-            display::display_bound_center(display::DECK_DISPLAY_WIDTH, &self.hand.get_size().to_string()),
-            display::display_bound_center(display::DECK_DISPLAY_WIDTH, &self.deck.get_size().to_string()),
+            display::display_bound_center(
+                display::DECK_DISPLAY_WIDTH,
+                &self.hand.get_size().to_string()
+            ),
+            display::display_bound_center(
+                display::DECK_DISPLAY_WIDTH,
+                &self.deck.get_size().to_string()
+            ),
         );
         println!("+---------------+    +---------------+");
     }
@@ -134,7 +140,7 @@ impl Player {
 
         println!("\nMy HAND:");
         display::display_card_row(&minions, true, display::EdgeNum::Low);
-        
+
         println!("My DECK:");
         self.deck.display();
         println!("My HEALTH: {},", self.health);

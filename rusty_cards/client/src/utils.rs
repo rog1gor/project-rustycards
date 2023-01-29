@@ -15,7 +15,7 @@ pub fn provide_input(msg: &str) -> String {
     println!("{msg}");
     let mut input = String::new();
     io::stdin().read_line(&mut input).unwrap();
-    input.trim().to_lowercase().to_string()
+    input.trim().to_lowercase()
 }
 
 // Sending a message that we're expecting a socket address of a server
@@ -73,7 +73,7 @@ fn get_help(i: &str) -> IResult<&str, &str> {
 pub fn provide_action() -> Action {
     let input =
         provide_input("Provide action that you want to perform (help for list of actions).");
-    
+
     if let Ok((args, _)) = get_play_card(&input) {
         if let Ok((n2, n1)) = get_play_args(args.trim()) {
             if let Ok((rest, n2)) = get_play_args(n2.trim()) {

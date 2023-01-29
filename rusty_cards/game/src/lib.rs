@@ -18,6 +18,12 @@ pub struct GameState {
     is_my_turn: bool,
 }
 
+impl Default for GameState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GameState {
     pub fn new() -> GameState {
         GameState {
@@ -91,22 +97,26 @@ impl GameState {
             false => Side::Opponent,
         };
         for i in 1..=7 {
-            match self.board.attack_on_file(i, &side) {
-                card::Attack::Face => {
-                    match &side {
-                        Side::Me => {
-                            if self.opponent.receive_dmg(self.board.get_attack_of_minion(i, &side)) {
-                                return (true, Side::Me);
-                            }
+            // match self.board.attack_on_file(i, &side) {
+            if let card::Attack::Face = self.board.attack_on_file(i, &side) {
+                match &side {
+                    Side::Me => {
+                        if self
+                            .opponent
+                            .receive_dmg(self.board.get_attack_of_minion(i, &side))
+                        {
+                            return (true, Side::Me);
                         }
-                        Side::Opponent => {
-                            if self.me.receive_dmg(self.board.get_attack_of_minion(i, &side)) {
-                                return (true, Side::Opponent);
-                            }
+                    }
+                    Side::Opponent => {
+                        if self
+                            .me
+                            .receive_dmg(self.board.get_attack_of_minion(i, &side))
+                        {
+                            return (true, Side::Opponent);
                         }
                     }
                 }
-                _ => (),
             };
         }
 
@@ -114,16 +124,18 @@ impl GameState {
         self.player_by_side(&side).draw_card();
         self.board.reset_turn();
         self.is_my_turn = !self.is_my_turn;
-        
+
         (false, Side::Me)
     }
 
     pub fn display(&self) {
-        println!();
+        print!("\x1B[2J\x1B[1;1H");
         if self.is_my_turn {
             println!("It's your turn. Choose an action n_n");
         } else {
-            println!("It's your opponent's turn. You must wait for they to finish their actions d-_-b");
+            println!(
+                "It's your opponent's turn. You must wait for they to finish their actions d-_-b"
+            );
         }
         println!();
 

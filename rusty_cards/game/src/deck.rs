@@ -61,9 +61,21 @@ impl Deck {
 
     pub fn display(&self) {
         println!("{}", display::display_edge(display::DECK_DISPLAY_WIDTH));
-        println!("{}", display::display_bound_center(display::DECK_DISPLAY_WIDTH, "Cards left:"));
-        println!("{}", display::display_bound_center(display::DECK_DISPLAY_WIDTH, ""));
-        println!("{}", display::display_bound_center(display::DECK_DISPLAY_WIDTH, &self.get_size().to_string()));
+        println!(
+            "{}",
+            display::display_bound_center(display::DECK_DISPLAY_WIDTH, "Cards left:")
+        );
+        println!(
+            "{}",
+            display::display_bound_center(display::DECK_DISPLAY_WIDTH, "")
+        );
+        println!(
+            "{}",
+            display::display_bound_center(
+                display::DECK_DISPLAY_WIDTH,
+                &self.get_size().to_string()
+            )
+        );
         println!("{}", display::display_edge(display::DECK_DISPLAY_WIDTH));
     }
 }

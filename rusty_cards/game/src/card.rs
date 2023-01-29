@@ -48,7 +48,7 @@ impl Minion {
     // Returns true if the minion dies
     pub fn apply_dmg(&mut self, dmg: i32) -> bool {
         self.health -= dmg;
-        if self.health >= 0 {
+        if self.health > 0 {
             return false;
         }
         true

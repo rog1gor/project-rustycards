@@ -25,7 +25,9 @@ impl PartialEq for Handshake {
             (Handshake::Send(addr1, password1, _), Handshake::Send(addr2, password2, _)) => {
                 (addr1 == addr2) && (password1 == password2)
             }
-            (Handshake::Wait(password1, _), Handshake::Wait(password2, _)) => password1 == password2,
+            (Handshake::Wait(password1, _), Handshake::Wait(password2, _)) => {
+                password1 == password2
+            }
             (Handshake::P2P(password1), Handshake::P2P(password2)) => password1 == password2,
             _ => false,
         }

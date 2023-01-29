@@ -4,7 +4,6 @@ use std::{
     sync::{atomic::AtomicBool, Mutex},
 };
 
-use game;
 use rusty_cards::Handshake;
 
 // Calss that sotres the stream of the client and
@@ -59,12 +58,12 @@ impl Server {
                     break;
                 }
 
-                s.spawn(|| {
-                    match Self::handle_connection(&mut players.lock().unwrap(), stream) {
+                s.spawn(
+                    || match Self::handle_connection(&mut players.lock().unwrap(), stream) {
                         Ok(_) => (),
                         Err(e) => println!("Error: {e}"),
-                    }
-                });
+                    },
+                );
             }
         });
     }
@@ -83,29 +82,25 @@ impl Server {
             Handshake::Ready(s) => {
                 let curr_player = ClientsAddr::new(stream, s);
                 println!("Clients TcpListener socket: {}", s);
-                if players.len() > 0 {
+                if players.is_empty() {
                     println!("There is another player looking for the opponent!");
                     Self::handshake_players(players.remove(0), curr_player)?;
                 } else {
                     println!("No other player looking for the game :c Adding to the queue.");
                     players.push(curr_player);
                 }
-            },
+            }
             _ => {
                 println!("Unexpected message @_@");
-                return Err(
-                    io::Error::new(
-                        io::ErrorKind::InvalidInput,
-                        "Incorrect type of the message. Aborting this stream",
-                    )
-                );
-            },
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "Incorrect type of the message. Aborting this stream",
+                ));
+            }
         }
 
         Ok(())
     }
-
-
 
     // Handshakes two players:
     //

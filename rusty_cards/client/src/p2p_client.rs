@@ -98,8 +98,7 @@ impl Client {
     //          address that we have received
     pub fn find_opponent(&self, game_state: &mut game::GameState) -> Option<TcpStream> {
         let mut server_stream = TcpStream::connect(self.server).unwrap();
-        let connection_established: bool = false; // this should never change
-        while !connection_established {
+        loop {
             println!("Sending listener address to the server.");
             let listener_address = self.listener.local_addr().ok()?;
             let ready_msg = Handshake::Ready(listener_address);
@@ -135,7 +134,6 @@ impl Client {
                 }
             }
         }
-        panic!("Opponent not found. This should never be reached!");
     }
 
     // Function that provides steps for the player who received Send message from the server
@@ -161,13 +159,13 @@ impl Client {
         }
 
         let confirmation: Handshake = serde_json::from_slice(&buffer[..num_bytes]).unwrap();
-        if confirmation != Handshake::P2P(password.clone()) {
+        if confirmation != Handshake::P2P(password) {
             println!("Faild to confirm the connection. Retrying to find opponent...");
             return None;
         }
 
         println!("Connection established!");
-        return Some(opponent_stream);
+        Some(opponent_stream)
     }
 
     // Function that provides steps for the player who received Wait message from the server
@@ -205,10 +203,14 @@ impl Client {
             println!("Connection established!");
             return Some(stream);
         }
-        return None; // Should never be reached
+        None // Should never be reached
     }
 
-    fn my_turn(&self, opponent_stream: &mut TcpStream, game_state: &mut game::GameState) -> (bool, Side) {
+    fn my_turn(
+        &self,
+        opponent_stream: &mut TcpStream,
+        game_state: &mut game::GameState,
+    ) -> (bool, Side) {
         let mut game_ends: bool = false;
         let mut winner = Side::Me;
         loop {
@@ -216,11 +218,15 @@ impl Client {
             let action = action::perform_action(&mut game_ends, &mut winner, action, game_state);
             match action {
                 Action::PlayCard(n1, n2) => {
-                    game_state.display(); 
-                    utils::send_msg(opponent_stream, Action::PlayCard(n1, n2));
+                    game_state.display();
+                    if utils::send_msg(opponent_stream, Action::PlayCard(n1, n2)).is_err() {
+                        panic!("Sending an action to play a card failed");
+                    }
                 }
                 Action::EndTurn => {
-                    utils::send_msg(opponent_stream, Action::EndTurn);
+                    if utils::send_msg(opponent_stream, Action::EndTurn).is_err() {
+                        panic!("Sending an action to end the turn failed");
+                    }
                     game_state.display();
                     return (game_ends, winner);
                 }
@@ -229,7 +235,11 @@ impl Client {
         }
     }
 
-    fn opponent_turn(&self, opponent_stream: &mut TcpStream, game_state: &mut game::GameState) -> (bool, Side) {
+    fn opponent_turn(
+        &self,
+        opponent_stream: &mut TcpStream,
+        game_state: &mut game::GameState,
+    ) -> (bool, Side) {
         let mut game_ends: bool = false;
         let mut winner = Side::Me;
         loop {
@@ -245,7 +255,10 @@ impl Client {
 
             match action {
                 Action::PlayCard(_, _) => game_state.display(),
-                Action::EndTurn => { game_state.display(); return (game_ends, winner); }
+                Action::EndTurn => {
+                    game_state.display();
+                    return (game_ends, winner);
+                }
                 _ => (),
             }
         }
@@ -290,6 +303,6 @@ impl Client {
                     return;
                 }
             }
-        }        
+        }
     }
 }

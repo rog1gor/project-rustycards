@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::game::{GameState, player::Side};
+use crate::game::{player::Side, GameState};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Action {
@@ -21,10 +21,11 @@ fn is_legal_to_play(card_num: usize, field_num: usize, game_state: &GameState) -
         println!(
             "Provided number: {}, Hand size: {}",
             card_num,
-            game_state.get_current_player_hand_size());
+            game_state.get_current_player_hand_size()
+        );
         return false;
     }
-    
+
     // ENAUGH MANA
     let players_mana = game_state.get_current_player_mana();
     let card_cost = game_state.get_current_player_nth_card_mana_cost(card_num);
@@ -35,7 +36,7 @@ fn is_legal_to_play(card_num: usize, field_num: usize, game_state: &GameState) -
     }
 
     // CORRECT FIELD NUMBER
-    if field_num <= 0 || 7 < field_num {
+    if 7 < field_num {
         println!("You must provide a field number that is on your side of the board (from 1 to 7)");
         println!("Provided field number: {}", field_num);
     }
@@ -59,7 +60,12 @@ fn is_legal(action: Action, game_state: &GameState) -> bool {
     }
 }
 
-pub fn perform_action(game_ends: &mut bool, winner: &mut Side, action: Action, game_state: &mut GameState) -> Action {
+pub fn perform_action(
+    game_ends: &mut bool,
+    winner: &mut Side,
+    action: Action,
+    game_state: &mut GameState,
+) -> Action {
     match action {
         Action::PlayCard(n1, n2) => {
             if !is_legal(Action::PlayCard(n1, n2), game_state) {
@@ -71,16 +77,19 @@ pub fn perform_action(game_ends: &mut bool, winner: &mut Side, action: Action, g
             } else {
                 game_state.play_from_hand(n1, n2, Side::Opponent);
             }
-            return Action::PlayCard(n1, n2);
+            Action::PlayCard(n1, n2)
         }
-        Action::EndTurn => { (*game_ends, *winner) = game_state.end_turn(); return Action::EndTurn; }
+        Action::EndTurn => {
+            (*game_ends, *winner) = game_state.end_turn();
+            Action::EndTurn
+        }
         Action::Help => {
             println!("Here is a list of possible actions:");
             println!("1. Play Card arg1 arg2 - to play card number arg1 to the arg2 field");
             println!("2. End Turn - to end the turn and proceed attacks");
             println!("3. Help - to list all the available actions");
-            return Action::Help;
+            Action::Help
         }
         _ => panic!("Error - extraoridanry action"),
-    };
+    }
 }
