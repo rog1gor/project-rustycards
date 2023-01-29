@@ -125,6 +125,12 @@ impl Board {
         }
     }
 
+    pub fn is_nth_field_empty(&self, n: usize, side: Side) -> bool {
+        assert!(0 < n && n <= 7);
+        let idx = Self::translate_idx(n, &side);
+        self.fields[idx].is_empty()
+    }
+
     pub fn attack_on_file(&mut self, field_num: usize, side: &Side) -> Attack {
         let field_num = Self::translate_idx(field_num, side);
         let opposing = Self::opposing_idx(field_num);

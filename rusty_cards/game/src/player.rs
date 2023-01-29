@@ -54,11 +54,19 @@ impl Player {
         }
     }
 
+    pub fn get_card(&self, idx: usize) -> &Minion {
+        assert!(idx > 0);
+        let i = idx - 1;
+        assert!(i < self.hand.get_size());
+        &self.hand.get_cards()[i]
+    }
+
     pub fn throw_card(&mut self, idx: usize) -> Minion {
         assert!(idx > 0);
         let i = idx - 1;
         assert!(i < self.hand.get_size());
         assert!(self.mana >= self.hand.get_cards_cost(i));
+        self.spend_mana(self.hand.get_cards_cost(i));
         self.hand.get_card(i)
     }
 
@@ -74,9 +82,17 @@ impl Player {
         false
     }
 
+    pub fn get_mana(&self) -> i32 {
+        self.mana
+    }
+
     pub fn spend_mana(&mut self, mana_points: i32) {
         assert!(mana_points <= self.mana);
         self.mana -= mana_points;
+    }
+
+    pub fn reset_mana(&mut self) {
+        self.mana = 5;
     }
 
     pub fn set_side(&mut self, side: Side) {
@@ -89,6 +105,10 @@ impl Player {
 
     pub fn shuffle_deck(&mut self) {
         self.deck.shuffle();
+    }
+
+    pub fn hand_size(&self) -> usize {
+        self.hand.get_size()
     }
 
     fn display_as_opponent(&self) {

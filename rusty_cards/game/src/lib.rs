@@ -48,6 +48,34 @@ impl GameState {
         }
     }
 
+    pub fn get_current_player_mana(&self) -> i32 {
+        if self.is_my_turn {
+            return self.me.get_mana();
+        }
+        self.opponent.get_mana()
+    }
+
+    pub fn get_current_player_hand_size(&self) -> usize {
+        if self.is_my_turn {
+            return self.me.hand_size();
+        }
+        self.opponent.hand_size()
+    }
+
+    pub fn get_current_player_nth_card_mana_cost(&self, n: usize) -> i32 {
+        if self.is_my_turn {
+            return self.me.get_card(n).get_mana();
+        }
+        self.opponent.get_card(n).get_mana()
+    }
+
+    pub fn is_field_empty(&self, idx: usize) -> bool {
+        if self.is_my_turn {
+            return self.board.is_nth_field_empty(idx, Side::Me);
+        }
+        self.board.is_nth_field_empty(idx, Side::Opponent)
+    }
+
     pub fn play_from_hand(&mut self, hand_idx: usize, board_idx: usize, side: Side) {
         let card = self.player_by_side(&side).throw_card(hand_idx);
         self.board.play_card(card, board_idx, &side);
@@ -57,7 +85,7 @@ impl GameState {
         self.is_my_turn
     }
 
-    pub fn end_turn(&mut self) {
+    pub fn end_turn(&mut self) -> (bool, Side) {
         let side = match self.is_my_turn {
             true => Side::Me,
             false => Side::Opponent,
@@ -68,14 +96,12 @@ impl GameState {
                     match &side {
                         Side::Me => {
                             if self.opponent.receive_dmg(self.board.get_attack_of_minion(i, &side)) {
-                                println!("You won!!! ^u^");
-                                return;
+                                return (true, Side::Me);
                             }
                         }
                         Side::Opponent => {
                             if self.me.receive_dmg(self.board.get_attack_of_minion(i, &side)) {
-                                println!("You lost!!! *n*");
-                                return;
+                                return (true, Side::Opponent);
                             }
                         }
                     }
@@ -84,9 +110,12 @@ impl GameState {
             };
         }
 
+        self.player_by_side(&side).reset_mana();
         self.player_by_side(&side).draw_card();
         self.board.reset_turn();
         self.is_my_turn = !self.is_my_turn;
+        
+        (false, Side::Me)
     }
 
     pub fn display(&self) {

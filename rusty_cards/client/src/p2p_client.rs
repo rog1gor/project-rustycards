@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::action::{self, Action};
-use crate::game;
+use crate::game::{self, player::Side};
 use crate::utils;
 use rusty_cards::Handshake;
 
@@ -208,10 +208,88 @@ impl Client {
         return None; // Should never be reached
     }
 
-    pub fn proceed_game(&self, mut opponent_stream: TcpStream, mut game_state: game::GameState) {
-        game_state.begin();
+    fn my_turn(&self, opponent_stream: &mut TcpStream, game_state: &mut game::GameState) -> (bool, Side) {
+        let mut game_ends: bool = false;
+        let mut winner = Side::Me;
         loop {
-            action::perform_action(&mut game_state);
+            let action = utils::provide_action();
+            let action = action::perform_action(&mut game_ends, &mut winner, action, game_state);
+            match action {
+                Action::PlayCard(n1, n2) => {
+                    game_state.display(); 
+                    utils::send_msg(opponent_stream, Action::PlayCard(n1, n2));
+                }
+                Action::EndTurn => {
+                    utils::send_msg(opponent_stream, Action::EndTurn);
+                    game_state.display();
+                    return (game_ends, winner);
+                }
+                _ => (),
+            }
         }
+    }
+
+    fn opponent_turn(&self, opponent_stream: &mut TcpStream, game_state: &mut game::GameState) -> (bool, Side) {
+        let mut game_ends: bool = false;
+        let mut winner = Side::Me;
+        loop {
+            println!("Waiting for opponent's action");
+            let mut buffer = [0; 1024];
+            let mut num_bytes = 0;
+            while num_bytes == 0 {
+                num_bytes = opponent_stream.read(&mut buffer).unwrap();
+            }
+
+            let action: Action = serde_json::from_slice(&buffer[..num_bytes]).unwrap();
+            let action = action::perform_action(&mut game_ends, &mut winner, action, game_state);
+
+            match action {
+                Action::PlayCard(_, _) => game_state.display(),
+                Action::EndTurn => { game_state.display(); return (game_ends, winner); }
+                _ => (),
+            }
+        }
+    }
+
+    fn proceed_game(&self, mut opponent_stream: TcpStream, mut game_state: game::GameState) {
+        game_state.begin();
+        game_state.display();
+
+        if game_state.is_my_turn() {
+            match self.my_turn(&mut opponent_stream, &mut game_state) {
+                (false, _) => (),
+                (true, winner) => {
+                    match winner {
+                        Side::Me => println!("You won!!! ^u^"),
+                        Side::Opponent => println!("You lost *n*"),
+                    };
+                    return;
+                }
+            }
+        }
+
+        loop {
+            match self.opponent_turn(&mut opponent_stream, &mut game_state) {
+                (false, _) => (),
+                (true, winner) => {
+                    match winner {
+                        Side::Me => println!("You won!!! ^u^"),
+                        Side::Opponent => println!("You lost *n*"),
+                    };
+                    return;
+                }
+            }
+
+            match self.my_turn(&mut opponent_stream, &mut game_state) {
+                (false, _) => (),
+                (true, winner) => {
+                    match winner {
+                        Side::Me => println!("You won!!! ^u^"),
+                        Side::Opponent => println!("You lost *n*"),
+                    };
+                    return;
+                }
+            }
+        }        
     }
 }
