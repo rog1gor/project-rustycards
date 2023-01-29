@@ -16,6 +16,7 @@ pub enum Handshake {
     Wait(String, GameState),
     // Message send from client to client to connect with password
     P2P(String),
+    None,
 }
 
 impl PartialEq for Handshake {

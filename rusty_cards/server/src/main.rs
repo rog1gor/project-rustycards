@@ -5,7 +5,7 @@ mod server;
 use server::Server;
 
 fn main() {
-    println!("Hello sunshine :]");
+    println!("Hello Game Master :3");
     let server = Server::default();
     server.start();
 }

@@ -1,3 +1,4 @@
+use log::{trace, warn};
 use std::{
     io::{self, Read, Write},
     net::{Shutdown, SocketAddr, TcpListener, TcpStream},
@@ -6,8 +7,7 @@ use std::{
 
 use rusty_cards::Handshake;
 
-// Calss that sotres the stream of the client and
-// socket address that the client sent to the server
+// Class that stores the stream of the client and socket address that the client sent to the server
 struct ClientsAddr {
     stream: TcpStream,
     listener_addr: SocketAddr,
@@ -52,46 +52,48 @@ impl Server {
         let players = Mutex::new(Vec::new());
         std::thread::scope(|s| {
             for stream in self.tcp_listener.incoming() {
-                println!("Client appeared!");
+                trace!("Client appeared!");
                 let stream = stream.unwrap();
                 if !self.running.load(std::sync::atomic::Ordering::Relaxed) {
                     break;
                 }
 
-                s.spawn(
-                    || match Self::handle_connection(&mut players.lock().unwrap(), stream) {
-                        Ok(_) => (),
-                        Err(e) => println!("Error: {e}"),
-                    },
-                );
+                s.spawn(|| match Self::handle_connection(&players, stream) {
+                    Ok(_) => (),
+                    Err(e) => warn!("Error: {e}"),
+                });
             }
         });
     }
 
-    // Handles messages from the clients.
+    // Handles messages from the clients
     // If there are no other players looking for the game, then it stores ClientsAddr
     // Otherwise it takes the ClientsAddr that appeared earlier and handshakes them
-    fn handle_connection(players: &mut Vec<ClientsAddr>, mut stream: TcpStream) -> io::Result<()> {
-        println!("Handling connection...");
+    fn handle_connection(
+        players: &Mutex<Vec<ClientsAddr>>,
+        mut stream: TcpStream,
+    ) -> io::Result<()> {
+        trace!("Handling connection...");
         let mut buffer = [0; 1024];
         let num_bytes = stream.read(&mut buffer)?;
-        println!("Parsing message...");
+        trace!("Parsing message...");
 
         let msg: Handshake = serde_json::from_slice(&buffer[..num_bytes]).unwrap();
         match msg {
             Handshake::Ready(s) => {
                 let curr_player = ClientsAddr::new(stream, s);
                 println!("Clients TcpListener socket: {}", s);
-                if players.is_empty() {
-                    println!("There is another player looking for the opponent!");
+                let mut players = players.lock().unwrap();
+                if !players.is_empty() {
+                    trace!("There is another player looking for the opponent!");
                     Self::handshake_players(players.remove(0), curr_player)?;
                 } else {
-                    println!("No other player looking for the game :c Adding to the queue.");
+                    trace!("No other player looking for the game :c Adding to the queue.");
                     players.push(curr_player);
                 }
             }
             _ => {
-                println!("Unexpected message @_@");
+                warn!("Unexpected message @_@");
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidInput,
                     "Incorrect type of the message. Aborting this stream",
@@ -113,7 +115,7 @@ impl Server {
     //
     // For now the password is always 'KOZA'
     fn handshake_players(player1: ClientsAddr, player2: ClientsAddr) -> io::Result<()> {
-        println!("Handshaking players...");
+        trace!("Handshaking players...");
         // Create game state
         let mut side1 = game::player::Player::me();
         side1.shuffle_deck();
@@ -136,25 +138,19 @@ impl Server {
         let msg1 = Handshake::Send(player2.get_listener_addr(), "KOZA".to_string(), game_state1);
         let serialized_msg1 = serde_json::to_vec(&msg1).unwrap();
         player1.get_stream().write_all(&serialized_msg1)?;
-        println!("Sending {} bytes to player1", serialized_msg1.len());
+        trace!("Sending {} bytes to player1", serialized_msg1.len());
 
         // Send info of player1 to to player2
         let msg2 = Handshake::Wait("KOZA".to_string(), game_state2);
         let serialized_msg2 = serde_json::to_vec(&msg2).unwrap();
         player2.get_stream().write_all(&serialized_msg2)?;
-        println!("Sending {} bytes to player2", serialized_msg2.len());
+        trace!("Sending {} bytes to player2", serialized_msg2.len());
 
         player1.get_stream().shutdown(Shutdown::Both).unwrap();
         player2.get_stream().shutdown(Shutdown::Both).unwrap();
 
         Ok(())
     }
-
-    // pub fn stop(&self) {
-    //     self.running
-    //         .store(false, std::sync::atomic::Ordering::Relaxed);
-    //     TcpStream::connect(("127.0.0.1", self.port())).unwrap();
-    // }
 
     pub fn port(&self) -> u16 {
         self.tcp_listener.local_addr().unwrap().port()

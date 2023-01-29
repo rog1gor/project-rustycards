@@ -9,14 +9,13 @@ use std::io;
 use p2p_client::Client;
 
 fn main() -> io::Result<()> {
-    println!("Hello angel :]");
+    println!("Hello in RustyCards :]");
 
     // Constructing a client (default or custom)
     let mut client = Client::default();
-    let input = utils::provide_input(
-        "Do you want to use default options (listed above)? If so, type: \'y\':",
-    );
-    if input.to_lowercase() != "y" {
+    let input =
+        utils::provide_input("Do you want to change bindings listed above? If so, type: \'y\':");
+    if input.to_lowercase() == "y" {
         println!("You chose not to use default configurations");
         let server_socket = utils::provide_server();
         let listener_socket = utils::provide_listener();
@@ -24,7 +23,7 @@ fn main() -> io::Result<()> {
     }
 
     // Looking for opponent or leaving a game
-    println!("Client ready to look for an opponent ^_^");
+    println!("Ready to look for an opponent ^_^");
     let mut exit_game: bool = false;
     while !exit_game {
         let input = utils::provide_input("Do you want to look for an opponent? If so type \'y\':");

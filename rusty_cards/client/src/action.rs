@@ -4,12 +4,14 @@ use crate::game::{player::Side, GameState};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Action {
-    Start(String),          // Information that the game starts with the greetings message
+    Start(String),          // information that the game starts with the greetings message
     PlayCard(usize, usize), // card number, field number
-    EndTurn,                // Performed at the end of the turn
+    EndTurn,                // performed at the end of the turn
     Help,                   // lists all the possible actions
 }
 
+// Checks if the provided card can be played to the provided field.
+// Prints the reason if the action is illegal.
 // To play a card there must be certain conditions met:
 // 1. You must have enaugh mana to play the card
 // 2. You must provide an index of the card in hand that exists
@@ -51,15 +53,17 @@ fn is_legal_to_play(card_num: usize, field_num: usize, game_state: &GameState) -
     true
 }
 
+// Checks whether an action is legal. Prints reason if it's illegal.
 fn is_legal(action: Action, game_state: &GameState) -> bool {
     match action {
         Action::PlayCard(n1, n2) => is_legal_to_play(n1, n2, game_state),
         Action::EndTurn => true,
         Action::Help => true,
-        _ => panic!("This action should never be called!"),
+        _ => panic!("Unknown or not ingame action"), // this should never be reached
     }
 }
 
+// Returns action that has been performed
 pub fn perform_action(
     game_ends: &mut bool,
     winner: &mut Side,
@@ -90,6 +94,6 @@ pub fn perform_action(
             println!("3. Help - to list all the available actions");
             Action::Help
         }
-        _ => panic!("Error - extraoridanry action"),
+        _ => panic!("Unknown or not ingame action"), // this should never be reached
     }
 }
