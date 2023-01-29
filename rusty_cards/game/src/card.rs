@@ -7,8 +7,8 @@ pub struct Minion {
     attack: i32,
     health: i32,
     mana_cost: i32,
-    name: String,  // this must be uniqe
-    rand_int: i32, // used to shuffle the deck
+    name: String,  // this should be uniqe
+    rand_int: i32, // used for deck shuffling
 }
 
 impl Ord for Minion {
@@ -70,6 +70,7 @@ impl Minion {
         &self.name
     }
 
+    // Sets random int to a random number so the deck can be shuffled
     pub fn randomize_order(&mut self, rng: &mut rand::rngs::ThreadRng) {
         self.rand_int = rng.gen();
     }
@@ -120,9 +121,10 @@ impl Minion {
     }
 }
 
+// Enum class that indicates what did the Minion attack
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Attack {
-    Trade,
-    Face,
-    None,
+    Trade, // trade with other Minion
+    Face,  // attacked opponent's health
+    None,  // did not attack this turn
 }

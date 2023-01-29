@@ -38,6 +38,7 @@ impl GameState {
         *self.player_by_side(&side) = player.clone();
     }
 
+    // starts the game with each player drawing 3 cards
     pub fn begin(&mut self) {
         self.me.begin();
         self.opponent.begin();
@@ -91,13 +92,20 @@ impl GameState {
         self.is_my_turn
     }
 
+    // At the end of the turn:
+    // 1. Every minion that belongs to the current player and haven't been played
+    //    this turn attacks the opposing field (can be other Minion or if there is
+    //    no minion in front, then attacks enemy's health)
+    // 2. Current player drawds one card from the top of their's deck
+    // 3. Mana bar resets
+    // Return tuple (bool, Side). The bool value is true if one of the players has won
+    // the game. In such case the Side value is set to the winner's side.
     pub fn end_turn(&mut self) -> (bool, Side) {
         let side = match self.is_my_turn {
             true => Side::Me,
             false => Side::Opponent,
         };
         for i in 1..=7 {
-            // match self.board.attack_on_file(i, &side) {
             if let card::Attack::Face = self.board.attack_on_file(i, &side) {
                 match &side {
                     Side::Me => {

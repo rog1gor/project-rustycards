@@ -39,7 +39,7 @@ impl Field {
         assert!(!self.is_empty());
         match &self.minion {
             Some(m) => m,
-            None => panic!("This methdo should not be called when the field is empty!"),
+            None => panic!("This method should not be called when the field is empty!"),
         }
     }
 
@@ -60,7 +60,7 @@ impl Field {
                     self.minion = None;
                 }
             }
-            None => panic!("This methdo shoudl not be called when the field is empty!"),
+            None => panic!("This method should not be called when the field is empty!"),
         }
     }
 
@@ -83,25 +83,11 @@ impl Default for Board {
 impl Board {
     pub fn new() -> Board {
         Board {
-            fields: vec![
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-                Field::new(),
-            ],
+            fields: vec![Field::new(); 14],
         }
     }
 
+    // Returns first index of the fields vector that belongs to the player
     fn get_fst_idx(side: &Side) -> usize {
         match side {
             Side::Opponent => 0,
@@ -109,6 +95,7 @@ impl Board {
         }
     }
 
+    // Translates index provided by the player to the index of the fields vector
     fn translate_idx(idx: usize, side: &Side) -> usize {
         assert!(idx < 14);
         match side {
@@ -117,6 +104,7 @@ impl Board {
         }
     }
 
+    // Returns index to the field that opposes field under index provided by the player
     fn opposing_idx(idx: usize) -> usize {
         if idx < 7 {
             return idx + 7;

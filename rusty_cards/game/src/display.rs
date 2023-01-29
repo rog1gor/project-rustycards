@@ -1,10 +1,15 @@
 use crate::card::Minion;
 
-// constants
+// In this module most of the functions don't display anything on their own,
+// but they provide displayable strings to multiple display functions/methods
+//
+// The only function that displays anything is the one that can display
+// row of the cards by a given vector of cards (last function in module)
+
 pub const DECK_DISPLAY_WIDTH: usize = 15;
 pub const CARD_DISPLAY_WIDTH: usize = 15;
 
-// Single display
+// Displays for single objects
 pub fn display_string_center(string_size: usize, s: &str) -> String {
     let free_space = string_size - s.len();
     let before = free_space / 2;
@@ -101,7 +106,6 @@ pub fn display_edge_num(edge_size: usize, num: usize) -> String {
 }
 
 // Display for multiple objects
-
 pub fn display_from_vec_center(part_size: usize, strings: Vec<String>) -> String {
     let mut display = String::new();
     for s in strings {
@@ -216,9 +220,9 @@ fn get_healths(minions: &Vec<Option<&Minion>>) -> (Vec<String>, Vec<String>) {
 }
 
 pub enum EdgeNum {
-    Low,
-    Up,
-    None,
+    Low,  // field numeration at the bottom of the field
+    Up,   // field numeration at the top of the field
+    None, // no numeration
 }
 
 pub fn display_card_row(minions: &Vec<Option<&Minion>>, display_mana: bool, edge_num: EdgeNum) {
