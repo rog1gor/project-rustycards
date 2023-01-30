@@ -36,4 +36,13 @@ Later we will try to develop the project - we will add more cards, card collecti
 - There are some delays with game logic
 - To run the server you need to run cargo run in server directory
 - To run the client you need to run cargo run in client directory
-- To setup clients and server there are multiple command line messages that should help with the setup.
+- To setup clients and server there are multiple command line messages that should help with the setup
+
+## Second part of the project
+- The client and the server are ready and the problems from the first part are solved
+- The game logic is implemented - the game can be played remotely!
+- Due to some problems I ended up writing these parts of project on my own, so I didn't have enaugh time to implement GUI other than the one in console (It is nice though)
+- To run the server you need to run cargo run in server directory
+- To run the client you need to run cargo run in client directory
+- To setup clients and server there are multiple command line messages that should help with the setup
+- There is a tutorial that will help you go through the game basics
