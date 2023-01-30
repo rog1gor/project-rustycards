@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 use crate::card::Minion;
 
 // In this module most of the functions don't display anything on their own,
@@ -11,7 +13,7 @@ pub const CARD_DISPLAY_WIDTH: usize = 15;
 
 // Displays for single objects
 pub fn display_string_center(string_size: usize, s: &str) -> String {
-    let free_space = string_size - s.len();
+    let free_space = string_size - s.normal().len();
     let before = free_space / 2;
     let after = (free_space + 1) / 2;
 
@@ -27,7 +29,7 @@ pub fn display_string_center(string_size: usize, s: &str) -> String {
 }
 
 pub fn display_string_left(string_size: usize, s: &str) -> String {
-    let free_space = string_size - s.len();
+    let free_space = string_size - s.normal().len();
     let mut display: String = s.to_string();
     for _ in 0..free_space {
         display += " ";
@@ -36,7 +38,7 @@ pub fn display_string_left(string_size: usize, s: &str) -> String {
 }
 
 pub fn display_string_right(string_size: usize, s: &str) -> String {
-    let free_space = string_size - s.len();
+    let free_space = string_size - s.normal().len();
     let mut display = String::new();
     for _ in 0..free_space {
         display += " ";
@@ -147,17 +149,17 @@ pub fn display_edges_num(edge_size: usize, num_edges: usize) -> String {
 }
 
 // Minion display utils
-fn get_mana(minions: &Vec<Option<&Minion>>) -> (Vec<String>, Vec<String>) {
+fn get_mana(minions: &Vec<Option<&Minion>>) -> (Vec<(usize, String)>, Vec<String>) {
     let mut upper = Vec::new();
     let mut lower = Vec::new();
     for minion in minions {
         match minion {
             Some(m) => {
-                upper.push("Mana:".to_string());
+                upper.push(("Mana:".len(), "Mana:".cyan().to_string()));
                 lower.push(m.get_mana().to_string());
             }
             None => {
-                upper.push("".to_string());
+                upper.push((0, "".to_string()));
                 lower.push("".to_string());
             }
         };
@@ -165,17 +167,17 @@ fn get_mana(minions: &Vec<Option<&Minion>>) -> (Vec<String>, Vec<String>) {
     (upper, lower)
 }
 
-fn get_names(minions: &Vec<Option<&Minion>>) -> (Vec<String>, Vec<String>) {
+fn get_names(minions: &Vec<Option<&Minion>>) -> (Vec<(usize, String)>, Vec<String>) {
     let mut upper = Vec::new();
     let mut lower = Vec::new();
     for minion in minions {
         match minion {
             Some(m) => {
-                upper.push("Name:".to_string());
+                upper.push(("Name:".len(), "Name:".bright_green().to_string()));
                 lower.push(m.get_name().to_string());
             }
             None => {
-                upper.push("".to_string());
+                upper.push((0, "".to_string()));
                 lower.push("".to_string());
             }
         };
@@ -183,17 +185,17 @@ fn get_names(minions: &Vec<Option<&Minion>>) -> (Vec<String>, Vec<String>) {
     (upper, lower)
 }
 
-fn get_attacks(minions: &Vec<Option<&Minion>>) -> (Vec<String>, Vec<String>) {
+fn get_attacks(minions: &Vec<Option<&Minion>>) -> (Vec<(usize, String)>, Vec<String>) {
     let mut upper = Vec::new();
     let mut lower = Vec::new();
     for minion in minions {
         match minion {
             Some(m) => {
-                upper.push("Attack:".to_string());
+                upper.push(("Attack:".len(), "Attack:".yellow().to_string()));
                 lower.push(m.get_attack().to_string());
             }
             None => {
-                upper.push("".to_string());
+                upper.push((0, "".to_string()));
                 lower.push("".to_string());
             }
         };
@@ -201,17 +203,17 @@ fn get_attacks(minions: &Vec<Option<&Minion>>) -> (Vec<String>, Vec<String>) {
     (upper, lower)
 }
 
-fn get_healths(minions: &Vec<Option<&Minion>>) -> (Vec<String>, Vec<String>) {
+fn get_healths(minions: &Vec<Option<&Minion>>) -> (Vec<(usize, String)>, Vec<String>) {
     let mut upper = Vec::new();
     let mut lower = Vec::new();
     for minion in minions {
         match minion {
             Some(m) => {
-                upper.push("Health:".to_string());
+                upper.push(("Health:".len(), "Health:".red().to_string()));
                 lower.push(m.get_health().to_string());
             }
             None => {
-                upper.push("".to_string());
+                upper.push((0, "".to_string()));
                 lower.push("".to_string());
             }
         };
@@ -223,6 +225,34 @@ pub enum EdgeNum {
     Low,  // field numeration at the bottom of the field
     Up,   // field numeration at the top of the field
     None, // no numeration
+}
+
+// Colorized versions for display_left
+// We provide a size of a string since colorized versions contains extra bytes
+pub fn display_color_string_left(string_size: usize, str_size: usize, s: &str) -> String {
+    let free_space = string_size - str_size;
+    let mut display: String = s.to_string();
+    for _ in 0..free_space {
+        display += " ";
+    }
+    display
+}
+
+pub fn display_color_bound_left(string_size: usize, str_size: usize, s: &str) -> String {
+    let mut display = String::new();
+    display += "|";
+    display += &display_color_string_left(string_size, str_size, s);
+    display += "|";
+
+    display
+}
+
+fn display_color_from_vec_left(part_size: usize, strings: Vec<(usize, String)>) -> String {
+    let mut display = String::new();
+    for (s_size, s) in strings {
+        display += &display_color_bound_left(part_size, s_size, &s);
+    }
+    display
 }
 
 pub fn display_card_row(minions: &Vec<Option<&Minion>>, display_mana: bool, edge_num: EdgeNum) {
@@ -237,23 +267,35 @@ pub fn display_card_row(minions: &Vec<Option<&Minion>>, display_mana: bool, edge
     // DISPLAYING MANA
     if display_mana {
         let (vec_up, vec_low) = get_mana(minions);
-        println!("{}", display_from_vec_left(CARD_DISPLAY_WIDTH, vec_up));
+        println!(
+            "{}",
+            display_color_from_vec_left(CARD_DISPLAY_WIDTH, vec_up)
+        );
         println!("{}", display_from_vec_center(CARD_DISPLAY_WIDTH, vec_low));
     }
 
     // DISPLAYING NAMES
     let (vec_up, vec_low) = get_names(minions);
-    println!("{}", display_from_vec_left(CARD_DISPLAY_WIDTH, vec_up));
+    println!(
+        "{}",
+        display_color_from_vec_left(CARD_DISPLAY_WIDTH, vec_up)
+    );
     println!("{}", display_from_vec_center(CARD_DISPLAY_WIDTH, vec_low));
 
     // DISPLAYING ATTACKS
     let (vec_up, vec_low) = get_attacks(minions);
-    println!("{}", display_from_vec_left(CARD_DISPLAY_WIDTH, vec_up));
+    println!(
+        "{}",
+        display_color_from_vec_left(CARD_DISPLAY_WIDTH, vec_up)
+    );
     println!("{}", display_from_vec_center(CARD_DISPLAY_WIDTH, vec_low));
 
     // DISPLAYING HEALTHS
     let (vec_up, vec_low) = get_healths(minions);
-    println!("{}", display_from_vec_left(CARD_DISPLAY_WIDTH, vec_up));
+    println!(
+        "{}",
+        display_color_from_vec_left(CARD_DISPLAY_WIDTH, vec_up)
+    );
     println!("{}", display_from_vec_center(CARD_DISPLAY_WIDTH, vec_low));
 
     // DISPLAYING LOWER EDGE

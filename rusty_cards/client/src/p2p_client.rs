@@ -1,3 +1,4 @@
+use colored::Colorize;
 use log::{trace, warn};
 use std::{
     io,
@@ -292,45 +293,41 @@ impl Client {
         }
     }
 
+    // Returns true if the game ends
+    fn process_turn_result(game_ends: bool, winner: Side) -> bool {
+        match game_ends {
+            false => false,
+            true => {
+                match winner {
+                    Side::Me => println!("{} ^u^", "You won!!!".bright_green()),
+                    Side::Opponent => println!("{} *n*", "You lost".red()),
+                };
+                true
+            }
+        }
+    }
+
     // Performs consecutive actions of the game until one of the players win
     fn proceed_game(&self, mut opponent_stream: TcpStream, mut game_state: game::GameState) {
         game_state.begin();
         game_state.display();
 
         if game_state.is_my_turn() {
-            match self.my_turn(&mut opponent_stream, &mut game_state) {
-                (false, _) => (),
-                (true, winner) => {
-                    match winner {
-                        Side::Me => println!("You won!!! ^u^"),
-                        Side::Opponent => println!("You lost *n*"),
-                    };
-                    return;
-                }
+            let (game_ends, winner) = self.my_turn(&mut opponent_stream, &mut game_state);
+            if Self::process_turn_result(game_ends, winner) {
+                return;
             }
         }
 
         loop {
-            match self.opponent_turn(&mut opponent_stream, &mut game_state) {
-                (false, _) => (),
-                (true, winner) => {
-                    match winner {
-                        Side::Me => println!("You won!!! ^u^"),
-                        Side::Opponent => println!("You lost *n*"),
-                    };
-                    return;
-                }
+            let (game_ends, winner) = self.opponent_turn(&mut opponent_stream, &mut game_state);
+            if Self::process_turn_result(game_ends, winner) {
+                return;
             }
 
-            match self.my_turn(&mut opponent_stream, &mut game_state) {
-                (false, _) => (),
-                (true, winner) => {
-                    match winner {
-                        Side::Me => println!("You won!!! ^u^"),
-                        Side::Opponent => println!("You lost *n*"),
-                    };
-                    return;
-                }
+            let (game_ends, winner) = self.my_turn(&mut opponent_stream, &mut game_state);
+            if Self::process_turn_result(game_ends, winner) {
+                return;
             }
         }
     }

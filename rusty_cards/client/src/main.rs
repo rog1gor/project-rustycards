@@ -10,15 +10,17 @@ use std::io;
 use p2p_client::Client;
 
 fn main() -> io::Result<()> {
-    print!("\x1B[2J\x1B[1;1H");
     println!("Hello in RustyCards :]");
     let input = utils::provide_input("Do you want to go through the tutorial? If so, type \'y\':");
-    if input == "y" { tutorial::run_tutorial(); }
+    if input == "y" {
+        tutorial::run_tutorial();
+    }
     print!("\x1B[2J\x1B[1;1H");
 
     // Constructing a client (default or custom)
     let mut client = Client::default();
-    let input = utils::provide_input("Do you want to change bindings listed above? If so, type: \'y\':");
+    let input =
+        utils::provide_input("Do you want to change bindings listed above? If so, type: \'y\':");
     if input == "y" {
         println!("You chose not to use default configurations");
         let server_socket = utils::provide_server();

@@ -1,3 +1,4 @@
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
 use crate::card::*;
@@ -112,9 +113,13 @@ impl Player {
     }
 
     fn display_as_opponent(&self) {
-        println!("Opponent's HEALTH: {},", self.health);
-        println!("Opponent's MANA POINTS: {}\n", self.mana);
-        println!(" Opponent's HAND      Opponent's DECK ");
+        println!("Opponent's {}: {},", "HEALTH".red(), self.health);
+        println!("Opponent's {}: {}\n", "MANA POINTS".cyan(), self.mana);
+        println!(
+            " {}      {} ",
+            "Opponent's HAND".bright_green(),
+            "Opponent's DECK".bright_green()
+        );
         println!("+---------------+    +---------------+");
         println!("|     Cards:    |    |  Cards Left:  |");
         println!("|               |    |               |");
@@ -143,8 +148,8 @@ impl Player {
 
         println!("My DECK:");
         self.deck.display();
-        println!("My HEALTH: {},", self.health);
-        println!("My MANA POINTS: {}\n", self.mana);
+        println!("My {}: {},", "HEALTH".red(), self.health);
+        println!("My {}: {}\n", "MANA POINTS".cyan(), self.mana);
     }
 
     pub fn display(&self) {

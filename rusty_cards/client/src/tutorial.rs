@@ -2,9 +2,7 @@ use crate::game;
 use crate::utils;
 
 fn cont(s: &str) {
-    while s != utils::provide_input(format!("Type \'{}\' to continue", s).as_str()) {
-        ()    
-    }
+    while s != utils::provide_input(format!("Type \'{}\' to continue", s).as_str()) {}
 }
 
 pub fn run_tutorial() {
@@ -65,7 +63,9 @@ pub fn run_tutorial() {
     game_state.end_turn();
     game_state.display();
 
-    println!("As you can see, your opponent's health dropped by 7, because your wizard attacked it.");
+    println!(
+        "As you can see, your opponent's health dropped by 7, because your wizard attacked it."
+    );
     println!("Now you have to wait for your opponent to end his turn.");
     println!("This time your opponent won't play any cards and will just end it's turn");
 
