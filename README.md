@@ -2,7 +2,6 @@
 
 ## Authors
 - Igor Kamiński (@rog1gor on GitHub)
-- Jakub Owczarek (@obukaj on GitHub)
 
 ## Description
 Rusty Cards is going to be a duel, card game with online gameplay.
